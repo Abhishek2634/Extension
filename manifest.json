@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "SciCommons Clipper",
+  "version": "1.1.0",
+  "description": "Detect papers, check SciCommons discussions, and save papers to SciCommons.",
+  "permissions": ["activeTab", "alarms", "identity", "scripting", "storage", "tabs"],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*",
+    "https://test.scicommons.org/*",
+    "https://backendtest.scicommons.org/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["contentScript.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Clip to SciCommons"
+  }
+}

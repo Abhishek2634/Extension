@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SciCommons Clipper</title>
+  <style>
+    :root {
+      --bg: #061611;
+      --panel: #0d241c;
+      --panel-soft: #123126;
+      --panel-light: #173d32;
+      --text: #ecfdf5;
+      --muted: #9ab8ad;
+      --subtle: #6f8c82;
+      --border: #245346;
+      --accent: #43d1bd;
+      --accent-strong: #2bb09e;
+      --danger: #fca5a5;
+      --success: #86efac;
+      --warning: #fde68a;
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 420px;
+      max-height: 620px;
+      margin: 0;
+      overflow-y: auto;
+      background:
+        radial-gradient(circle at 15% -10%, rgba(67, 209, 189, 0.22), transparent 32%),
+        linear-gradient(180deg, #071b15 0%, var(--bg) 52%, #04100d 100%);
+      color: var(--text);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 13px;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 13px;
+      background: var(--accent);
+      color: #03130f;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 120ms ease, background 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      background: #56deca;
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(4, 16, 13, 0.72);
+      color: var(--text);
+      outline: none;
+      padding: 10px 11px;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+      line-height: 1.42;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(67, 209, 189, 0.16);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .app {
+      padding: 16px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 144px;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+
+    .brand {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1px solid rgba(67, 209, 189, 0.55);
+      border-radius: 10px;
+      background: rgba(67, 209, 189, 0.13);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.05;
+    }
+
+    .tagline {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .environment-wrap label {
+      margin-bottom: 5px;
+      text-align: right;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(13, 36, 28, 0.88);
+      box-shadow: var(--shadow);
+    }
+
+    .auth-card {
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .auth-line {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 11px;
+    }
+
+    .auth-copy {
+      min-width: 0;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .auth-dot {
+      width: 9px;
+      height: 9px;
+      flex: 0 0 auto;
+      border-radius: 999px;
+      background: var(--subtle);
+      box-shadow: 0 0 0 4px rgba(111, 140, 130, 0.14);
+    }
+
+    .auth-card.connected .auth-dot {
+      background: var(--success);
+      box-shadow: 0 0 0 4px rgba(134, 239, 172, 0.14);
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+    }
+
+    .secondary {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+    }
+
+    .secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .paper-card {
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .section-head {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 11px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .status-pill {
+      min-height: 24px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 9px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 11px;
+      line-height: 1.35;
+      text-align: right;
+    }
+
+    .status-pill.success {
+      border-color: rgba(134, 239, 172, 0.45);
+      color: var(--success);
+    }
+
+    .status-pill.error {
+      border-color: rgba(252, 165, 165, 0.45);
+      color: var(--danger);
+    }
+
+    .match-panel {
+      margin-bottom: 12px;
+      border-color: rgba(67, 209, 189, 0.42);
+      background: rgba(67, 209, 189, 0.09);
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .match-panel.hidden {
+      display: none;
+    }
+
+    .match-panel {
+      padding: 10px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      margin-bottom: 11px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .url-preview {
+      overflow: hidden;
+      margin: -2px 0 12px;
+      color: var(--subtle);
+      font-size: 11px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .checkbox-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 2px 0 12px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .checkbox-row input {
+      width: 17px;
+      height: 17px;
+      flex: 0 0 auto;
+      accent-color: var(--accent);
+    }
+
+    .checkbox-row label {
+      margin: 0;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: none;
+    }
+
+    .save-button {
+      width: 100%;
+      margin-top: 2px;
+    }
+
+    .status {
+      min-height: 19px;
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .status.success {
+      color: var(--success);
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">SC</div>
+        <div>
+          <h1>SciCommons</h1>
+          <p class="tagline">Save papers into SciCommons.</p>
+        </div>
+      </div>
+      <div class="environment-wrap">
+        <label for="environment">Target</label>
+        <select id="environment" aria-label="SciCommons environment"></select>
+      </div>
+    </header>
+
+    <section id="auth-card" class="panel auth-card" aria-live="polite">
+      <div class="auth-line">
+        <span class="auth-dot" aria-hidden="true"></span>
+        <div id="auth-panel" class="auth-copy"></div>
+      </div>
+      <div class="actions">
+        <button id="login-btn" type="button">Connect</button>
+        <button id="logout-btn" class="secondary" type="button">Disconnect</button>
+      </div>
+    </section>
+
+    <section class="panel paper-card">
+      <div class="section-head">
+        <p class="section-title">Detected paper</p>
+        <p id="lookup-status" class="status-pill">Detecting...</p>
+      </div>
+      <div id="match-panel" class="match-panel hidden"></div>
+      <div id="page-url" class="url-preview"></div>
+
+      <form id="paper-form">
+        <div class="field">
+          <label for="title">Title</label>
+          <input id="title" type="text" autocomplete="off">
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="doi">DOI</label>
+            <input id="doi" type="text" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="pmid">PMID</label>
+            <input id="pmid" type="text" autocomplete="off">
+          </div>
+          <div class="field full">
+            <label for="arxiv_id">arXiv ID</label>
+            <input id="arxiv_id" type="text" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="authors">Authors</label>
+          <input id="authors" type="text" autocomplete="off" placeholder="Jane Doe, John Smith">
+        </div>
+
+        <div class="field">
+          <label for="abstract">Abstract</label>
+          <textarea id="abstract"></textarea>
+        </div>
+
+        <div class="checkbox-row">
+          <input id="add_to_community" type="checkbox">
+          <label for="add_to_community">Submit to a community</label>
+        </div>
+
+        <div id="community-section" class="hidden">
+          <div class="field">
+            <label for="community_name">Community name</label>
+            <input id="community_name" type="text" autocomplete="off">
+          </div>
+        </div>
+
+        <input id="url" type="hidden">
+        <button id="save-btn" class="save-button" type="submit">Save to SciCommons</button>
+      </form>
+
+      <p id="status" class="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
