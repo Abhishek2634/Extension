@@ -50,6 +50,76 @@ const getConfig = async () => {
 
 const normalizeBaseUrl = (url) => url.replace(/\/+$/, "");
 
+const normalizeText = (value) =>
+  String(value || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const normalizeDoi = (value) =>
+  normalizeText(value)
+    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, "")
+    .replace(/^doi:\s*/i, "")
+    .replace(/[.,;)\]]+$/, "")
+    .trim();
+
+const formatCrossrefAuthor = (author) => {
+  if (!author || typeof author !== "object") return "";
+  return normalizeText(author.name || [author.given, author.family].filter(Boolean).join(" "));
+};
+
+const normalizeCrossrefMetadata = (message = {}) => ({
+  title: normalizeText(Array.isArray(message.title) ? message.title[0] : message.title),
+  abstract: normalizeText(message.abstract),
+  authors: Array.isArray(message.author) ? message.author.map(formatCrossrefAuthor).filter(Boolean) : [],
+  doi: normalizeDoi(message.DOI),
+  url: normalizeText(message.URL)
+});
+
+const crossrefErrorMessage = (payload, fallback) => {
+  const message = payload?.message;
+  if (typeof message === "string") return message;
+  if (Array.isArray(message) && message[0]?.message) return message[0].message;
+  return fallback;
+};
+
+const fetchCrossrefMetadata = async (doi) => {
+  const normalizedDoi = normalizeDoi(doi);
+  if (!normalizedDoi) {
+    throw new Error("A DOI is required for CrossRef lookup.");
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const response = await fetch(`https://api.crossref.org/works/${encodeURIComponent(normalizedDoi)}`, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal
+    });
+
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(crossrefErrorMessage(payload, `CrossRef request failed (${response.status}).`));
+    }
+
+    return normalizeCrossrefMetadata(payload?.message || {});
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error("CrossRef metadata request timed out.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 const getAuth = async () => {
   const stored = await storageGet({ [STORAGE_KEYS.auth]: null });
   return stored[STORAGE_KEYS.auth];
@@ -284,6 +354,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         return { ok: true, data: await getAuthStatus() };
       case "LOOKUP_PAPER":
         return { ok: true, data: await lookupPaper(message.paper) };
+      case "FETCH_CROSSREF_METADATA":
+        return { ok: true, data: await fetchCrossrefMetadata(message.doi) };
       case "IMPORT_PAPER":
         return { ok: true, data: await importPaper(message.payload) };
       case "RETRY_QUEUE":

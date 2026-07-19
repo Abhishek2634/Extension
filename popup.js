@@ -157,6 +157,49 @@ const renderPaper = (paper) => {
   elements.pageUrl.title = paper?.url || "";
 };
 
+const hasAuthors = (paper) => Array.isArray(paper?.authors) && paper.authors.length > 0;
+
+const isWeakTitle = (paper) => {
+  const title = paper?.title?.trim();
+  if (!title) return true;
+  if (title.length <= 3) return true;
+  if (/^(untitled|just a moment|access denied)$/i.test(title)) return true;
+
+  try {
+    const hostname = new URL(paper?.url || "").hostname.replace(/^www\./, "");
+    return Boolean(hostname && title.toLowerCase() === hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+};
+
+const shouldFetchCrossref = (paper) =>
+  Boolean(paper?.doi && (isWeakTitle(paper) || !paper.abstract || !hasAuthors(paper)));
+
+const mergeCrossrefMetadata = (paper, crossref) => ({
+  ...paper,
+  title: isWeakTitle(paper) && crossref?.title ? crossref.title : paper.title,
+  abstract: !paper.abstract && crossref?.abstract ? crossref.abstract : paper.abstract,
+  authors: !hasAuthors(paper) && Array.isArray(crossref?.authors) && crossref.authors.length
+    ? crossref.authors
+    : paper.authors,
+  doi: paper.doi || crossref?.doi || "",
+  url: paper.url || crossref?.url || ""
+});
+
+const enrichWithCrossref = async (paper) => {
+  if (!shouldFetchCrossref(paper)) return paper;
+
+  setLookupStatus("Enriching from CrossRef...");
+  try {
+    const crossref = await sendMessage({ type: "FETCH_CROSSREF_METADATA", doi: paper.doi });
+    return mergeCrossrefMetadata(paper, crossref);
+  } catch (error) {
+    console.info("SciCommons CrossRef fallback skipped:", error.message);
+    return paper;
+  }
+};
+
 const renderMatch = (match) => {
   if (match?.found) {
     elements.matchPanel.classList.remove("hidden");
@@ -277,6 +320,8 @@ const initializePopup = async () => {
   try {
     await refreshAuthStatus();
     state.detectedPaper = await detectPaper();
+    renderPaper(state.detectedPaper);
+    state.detectedPaper = await enrichWithCrossref(state.detectedPaper);
     renderPaper(state.detectedPaper);
     await lookupDetectedPaper();
   } catch (error) {

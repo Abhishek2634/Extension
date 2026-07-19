@@ -9,7 +9,8 @@
     "http://localhost:8000/*",
     "http://127.0.0.1:8000/*",
     "https://test.scicommons.org/*",
-    "https://backendtest.scicommons.org/*"
+    "https://backendtest.scicommons.org/*",
+    "https://api.crossref.org/*"
   ],
   "background": {
     "service_worker": "background.js"
