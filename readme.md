@@ -1,4 +1,4 @@
-# SciCommons Clipper
+# SciCommons Extension.
 
 A Chrome MV3 extension for detecting papers on publisher/preprint pages, checking whether they already exist on SciCommons, and saving them through the SciCommons integrations API.
 
