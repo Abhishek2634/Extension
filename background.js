@@ -265,6 +265,15 @@ const enqueueImport = async (payload, reason) => {
   return queued;
 };
 
+// Errors that will never succeed on a later attempt, so retrying is pointless.
+// 409 is included because the server returns it when the paper exists but is not available to
+// this user, or when the supplied identifiers refer to different papers. Neither resolves by
+// waiting, so queueing them would retry forever and never surface to the user.
+const TERMINAL_IMPORT_STATUSES = [400, 401, 403, 404, 409];
+
+const isTerminalImportError = (error) =>
+  Boolean(error?.authRequired) || TERMINAL_IMPORT_STATUSES.includes(error?.status);
+
 const importPaper = async (payload) => {
   try {
     const result = await apiFetch("/api/integrations/papers/import", {
@@ -273,7 +282,7 @@ const importPaper = async (payload) => {
     });
     return { result, queued: false };
   } catch (error) {
-    if (error.authRequired || error.status === 400 || error.status === 401 || error.status === 403 || error.status === 404) {
+    if (isTerminalImportError(error)) {
       throw error;
     }
     const queued = await enqueueImport(payload, error.message);
@@ -287,6 +296,7 @@ async function retryQueue() {
 
   const queue = await getQueue();
   const remaining = [];
+  const dropped = [];
   let retried = 0;
 
   for (const item of queue) {
@@ -297,6 +307,11 @@ async function retryQueue() {
       });
       retried += 1;
     } catch (error) {
+      if (isTerminalImportError(error)) {
+        // Drop it: re-queueing a terminal failure kept it in the queue indefinitely.
+        dropped.push({ ...item, reason: error.message });
+        continue;
+      }
       remaining.push({
         ...item,
         attempts: (item.attempts || 0) + 1,
@@ -307,7 +322,7 @@ async function retryQueue() {
   }
 
   await setQueue(remaining);
-  return { retried, remaining: remaining.length };
+  return { retried, remaining: remaining.length, dropped: dropped.length };
 }
 
 const getAuthStatus = async () => {
